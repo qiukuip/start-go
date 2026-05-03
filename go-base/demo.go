@@ -3,13 +3,18 @@ package main
 import (
 	// "bufio"
 	"cmp"
+	"errors"
 	"fmt"
+	"io"
 	"math"
 	"math/rand"
 	"os"
+	"reflect"
 	"slices"
 	"strings"
+	"time"
 	"unsafe"
+	"github.com/qiukuip/hello"
 )
 
 type Person struct {
@@ -239,6 +244,205 @@ func main() {
 
 	p2 := &people[1]
 	fmt.Println(p2.Name, p2.Age, p2.Salary)
+
+	fmt.Println("=====")
+
+	person1 := Person{
+		"Dove",
+		30,
+		2000.00,
+	}
+	fmt.Println(person1)
+
+	person2 := NewPerson("张三", 10, 1500.00)
+	fmt.Println(*person2)
+
+	person3 := NewPerson1(
+		WithName("李四"),
+		WithAge(23),
+		WithSalary(1200.00),
+	)
+	fmt.Println(*person3)
+
+	fmt.Println("=====")
+
+	var intSlice IntSlice
+	intSlice = []int{1, 2, 3, 4, 5}
+	fmt.Println(intSlice.Get(1))
+	intSlice.Set(1, 10)
+	fmt.Println(intSlice)
+	fmt.Println(intSlice.Len())
+
+	company := Company{
+		CraneA{},
+	}
+	company.Build()
+	fmt.Println()
+	company.crane = CraneB{}
+	company.Build()
+
+	fmt.Println("=====")
+
+	file, err := os.OpenFile("../files/test.txt", os.O_RDWR|os.O_CREATE, 0666)
+	if os.IsNotExist(err) {
+		fmt.Println("文件不存在")
+	} else if err != nil {
+		fmt.Println("打开文件出错")
+	} else {
+		fmt.Println("打开文件成功")
+	}
+	fmt.Println(file.Name())
+	
+	defer file.Close()
+
+	fmt.Println("=====")
+
+	fileInfo, err := os.Stat("../files/test.txt")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("%+v\n", fileInfo)
+	
+	fmt.Println("=====")
+
+	file1, err := os.OpenFile("../files/test.txt", os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		fmt.Println("访问文件异常")
+	} else {
+		fmt.Println("打开文件成功", file1.Name())
+		bytes, err := ReadFile(file)
+		if err != nil {
+			fmt.Println("文件读取异常")
+		} else {
+			fmt.Println(string(bytes))
+		}
+		file1.Close()
+	}
+
+	fmt.Println("=====")
+
+	bytes, err := os.ReadFile("../files/test.txt")
+	if err != nil {
+		fmt.Println("打开文件失败")
+	} else {
+		fmt.Println(string(bytes))
+	}
+
+	fmt.Println("=====")
+
+	file2, err := os.OpenFile("../files/test.txt", os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		fmt.Println("打开文件出错")
+	}
+	bytes2, err := io.ReadAll(file2)
+	if err != nil {
+		fmt.Println("打开文件出错")
+	} else {
+		fmt.Println(string(bytes2))
+	}
+	file2.Close()
+
+	fmt.Println("=====")
+
+	file3, err := os.OpenFile("../files/test.txt", os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		fmt.Println("打开文件出错")
+	} else {
+		offset, err := file3.WriteString("你好，世界！")
+		if err != nil {
+			fmt.Println("写入文件出错")
+		} else {
+			fmt.Println("offset: ", offset)
+		}
+		file3.Close()
+	}
+
+	bytes3, err := os.ReadFile("../files/test.txt")
+	if err != nil {
+		fmt.Println("打开文件出错")
+	} else {
+		fmt.Println(string(bytes3))
+	}
+
+	fmt.Println("=====")
+
+	dir, err := os.ReadDir(".")
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		for _, entry := range dir {
+			fmt.Println(entry.Name())
+		}
+	}
+
+	fmt.Println("=====")
+
+	n := 5
+	for f := range Fibonacci(n) {
+		fmt.Println(f)
+	}
+
+	// panic("执行完了喵")
+	// fatal("出错了喵")
+	
+	err1 := errors.New("这是一个错误")
+	err2 := fmt.Errorf("这是格式化参数的错误%d\n", 1)
+	fmt.Println(err1)
+	fmt.Println(err2)
+
+	wrapErr := fmt.Errorf("错误，%w\n", err1)
+	fmt.Println(wrapErr.Error())
+
+	fmt.Println("====")
+
+	initDatabase("1", 8000)
+
+	fmt.Println("=====")
+
+	str7 := "hello world!"
+	reflectType := reflect.TypeOf(str7)
+	fmt.Println(reflectType)
+
+	var eface any
+	eface = map[string]int{}
+	rType := reflect.TypeOf(eface)
+	fmt.Println(rType.Key().Kind())
+	fmt.Println(rType.Elem().Kind())
+
+	fmt.Println("====")
+
+	fmt.Println(reflect.TypeOf("hello world!").Comparable())
+	fmt.Println(reflect.TypeOf(1024).Comparable())
+	fmt.Println(reflect.TypeOf([]int{}).Comparable())
+	fmt.Println(reflect.TypeOf(struct{}{}).Comparable())
+
+	rInface := reflect.TypeOf(new(MyInterface)).Elem()
+	fmt.Println(reflect.TypeOf(new(MyStruct)).Elem().Implements(rInface))
+	fmt.Println(reflect.TypeOf(new(OtherStruct)).Elem().Implements(rInface))
+
+	fmt.Println(reflect.TypeOf(new(MyStruct)).Elem().ConvertibleTo(rInface))
+	fmt.Println(reflect.TypeOf(new(OtherStruct)).Elem().ConvertibleTo(rInface))
+
+	num3 := 12345
+	rValue := reflect.ValueOf(num3)
+	fmt.Println(rValue)
+	fmt.Println(rValue.Type())
+
+	num4 := new(int)
+	*num4 = 12345
+	rValue1 := reflect.ValueOf(num4).Elem()
+	fmt.Println(rValue1)
+	fmt.Println(rValue1.Interface())
+
+	fmt.Println("=====")
+
+	fmt.Println("start")
+	for i := 0; i < 10; i++ {
+		go fmt.Println(i)
+		time.Sleep(time.Millisecond)
+	}
+	time.Sleep(time.Millisecond)
+	fmt.Println("end")
 }
 
 func do() {
@@ -246,4 +450,187 @@ func do() {
 		fmt.Println("defer 1")
 	}()
 	fmt.Println("defer 2")
+}
+
+func NewPerson(name string, age int, salary float64) *Person {
+	return &Person{Name: name, Age: age, Salary: salary}
+}
+
+type PersonOptions func(p *Person)
+
+func WithName(name string) PersonOptions {
+	return func(p *Person) {
+		p.Name = name
+	}
+}
+
+func WithAge(age int) PersonOptions {
+	return func(p *Person) {
+		p.Age = age
+	}
+}
+
+func WithSalary(salary float64) PersonOptions {
+	return func(p *Person) {
+		p.Salary = salary
+	}
+}
+
+func NewPerson1(options ...PersonOptions) *Person {
+	p := &Person{}
+	for _, option := range options {
+		option(p)
+	}
+	return p
+}
+
+type IntSlice []int
+
+func (i IntSlice) Get(index int) int {
+	return i[index]
+}
+
+func (i IntSlice) Set(index, value int) {
+	i[index] = value
+}
+
+func (i IntSlice) Len() int {
+	return len(i)
+}
+
+type MyInt int
+
+func (myInt MyInt) Set(value int) {
+	myInt = MyInt(value)
+}
+
+type Crane interface {
+	JackUp() string
+	Hoist() string
+}
+
+type CraneA struct {
+	work int
+}
+
+func (c CraneA) Work() {
+	fmt.Println("使用技术A")
+}
+
+func (c CraneA) JackUp() string {
+	c.Work()
+	return "CraneA jack up!"
+}
+
+func (c CraneA) Hoist() string {
+	c.Work()
+	return "CraneA hoist"
+}
+
+type CraneB struct {
+	boot string
+}
+
+func (b CraneB) Work() {
+	fmt.Println("使用技术B")
+}
+
+func (b CraneB) JackUp() string {
+	b.Work()
+	return "CraneB jack up"
+}
+
+func (b CraneB) Hoist() string {
+	b.Work()
+	return "CraneB hoist"
+}
+
+type Company struct {
+	crane Crane
+}
+
+func (c *Company) Build() {
+	fmt.Println(c.crane.JackUp())
+	fmt.Println(c.crane.Hoist())
+	fmt.Println("建设完成")
+}
+
+func ReadFile(file *os.File) ([]byte, error) {
+	buffer := make([]byte, 0, 512)
+	for {
+		if len(buffer) == cap(buffer) {
+			// 扩容
+			buffer = append(buffer, 0)[:len(buffer)]
+		}
+		offset, err := file.Read(buffer[len(buffer):cap(buffer)])
+		buffer = buffer[:len(buffer) + offset]
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				err = nil
+			}
+			return buffer, err
+		}
+	}
+}
+
+func Fibonacci(n int) func(yield func(int) bool) {
+	a, b, c := 0, 1, 1
+	return func(yield func(int) bool) {
+		for range n {
+			if !yield(a) {
+				return
+			}
+			a, b := b, c
+			c = a + b
+		}
+	}
+}
+
+type wrapError struct {
+	msg string
+	err error
+}
+
+func (e *wrapError) Error() string {
+	return e.msg
+}
+
+func (e *wrapError) Unwrap() error {
+	return e.err
+}
+
+func initDatabase(host string, port int) {
+	defer fmt.Println("A")
+	defer fmt.Println("B")
+	if len(host) == 0 || port == 0 {
+		panic("无效的数据库连接参数")
+	} else {
+		fmt.Println("数据库已连接")
+		defer fmt.Println("C")
+	}
+}
+
+func dangerOp() {
+	defer fmt.Println("1")
+	defer fmt.Println("2")
+	panic("dangerOp panic")
+	defer fmt.Println("3")
+}
+
+type MyInterface interface {
+	My() string
+}
+
+type MyStruct struct{
+}
+
+func (m MyStruct) My() string {
+	return "my"
+}
+
+type OtherStruct struct {
+}
+
+func (o OtherStruct) String() string {
+	return "other"
 }
