@@ -11,14 +11,16 @@ date: 2026-04-24 13:38:58
 ```bash
 go mod init
 ```
-```
-```
-```
 
 模块引用：
 ```bash
 go mod edit -replace day.happy365/greetings=../greetings
 ```
 
+获取依赖
+```bash
+go mod tidy
 
+go get .
 ```
+

@@ -12,13 +12,14 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 	"unsafe"
 )
 
 type Person struct {
-	Name string
-	Age int
+	Name   string
+	Age    int
 	Salary float64
 }
 
@@ -79,14 +80,14 @@ func main() {
 		fmt.Println("特别差")
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		fmt.Println("i = ", i)
 	}
 
 	for i := 1; i <= 9; i++ {
 		for j := 1; j <= 9; j++ {
 			if i <= j {
-				fmt.Printf("%d * %d = %d ", i, j, i * j)
+				fmt.Printf("%d * %d = %d ", i, j, i*j)
 			}
 		}
 		fmt.Println()
@@ -163,7 +164,7 @@ func main() {
 	}
 
 	runes := []rune(str6)
-	for i := 0; i < len(runes); i++ {
+	for i := range len(runes) {
 		fmt.Println(string(runes[i]))
 	}
 
@@ -192,7 +193,7 @@ func main() {
 	fmt.Println("=====")
 
 	set := make(map[int]struct{}, 3)
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		set[rand.Intn(100)] = struct{}{}
 	}
 	fmt.Println(set)
@@ -215,15 +216,15 @@ func main() {
 
 	res3 := func(a, b int) int {
 		return a + b
-	} (1, 2)
+	}(1, 2)
 	fmt.Println("res3: ", res3)
 
 	people := []Person{
 		{Name: "Alice", Age: 25, Salary: 5000.0},
-	    {Name: "Charlie", Age: 28, Salary: 5500.0},
-	    {Name: "Bob", Age: 30, Salary: 6000.0},
+		{Name: "Charlie", Age: 28, Salary: 5500.0},
+		{Name: "Bob", Age: 30, Salary: 6000.0},
 	}
-	
+
 	slices.SortFunc(people, func(p1, p2 Person) int {
 		if p1.Name > p2.Name {
 			return 1
@@ -238,7 +239,7 @@ func main() {
 
 	do()
 
-	type Empty struct {}
+	type Empty struct{}
 	fmt.Println(unsafe.Sizeof(Empty{}))
 
 	p2 := &people[1]
@@ -291,7 +292,7 @@ func main() {
 		fmt.Println("打开文件成功")
 	}
 	fmt.Println(file.Name())
-	
+
 	defer file.Close()
 
 	fmt.Println("=====")
@@ -301,7 +302,7 @@ func main() {
 		fmt.Println(err)
 	}
 	fmt.Printf("%+v\n", fileInfo)
-	
+
 	fmt.Println("=====")
 
 	file1, err := os.OpenFile("../files/test.txt", os.O_RDWR|os.O_CREATE, 0666)
@@ -383,7 +384,7 @@ func main() {
 
 	// panic("执行完了喵")
 	// fatal("出错了喵")
-	
+
 	err1 := errors.New("这是一个错误")
 	err2 := fmt.Errorf("这是格式化参数的错误%d\n", 1)
 	fmt.Println(err1)
@@ -436,7 +437,7 @@ func main() {
 	fmt.Println("=====")
 
 	fmt.Println("start")
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		go fmt.Println(i)
 		time.Sleep(time.Millisecond)
 	}
@@ -459,7 +460,7 @@ func main() {
 	ch := make(chan int, 5)
 	chW := make(chan struct{})
 	chR := make(chan struct{})
-	
+
 	defer func() {
 		close(ch)
 		close(chW)
@@ -499,6 +500,57 @@ func main() {
 	}()
 	<-ch1
 	fmt.Println("read finished")
+
+	fmt.Println("=====")
+
+	ch2 := make(chan int, 10)
+	// defer close(ch2)
+	go func() {
+		for i := range 10 {
+			ch2 <- i
+		}
+		fmt.Println("write finished")
+		close(ch2)
+	}()
+
+	for n := range ch2 {
+		fmt.Println("read ", n)
+	}
+
+	fmt.Println("=====")
+
+	// waitGroup
+	var wait sync.WaitGroup
+	// 指定子协程数量
+	wait.Add(1)
+	go func() {
+		time.Sleep(time.Millisecond)
+		fmt.Println(1)
+		wait.Done()
+		fmt.Println("子协程执行完毕")
+	}()
+	fmt.Println("主协程等待")
+	wait.Wait()
+	fmt.Println(2)
+	fmt.Println("主协程执行完毕")
+
+	fmt.Println("=====")
+
+	var mainWait1 sync.WaitGroup
+	var subWait1 sync.WaitGroup
+	mainWait1.Add(10)
+	fmt.Println("start")
+	for i := range 10 {
+		subWait1.Add(1)
+		go func() {
+			fmt.Println(i)
+			subWait1.Done()
+			mainWait1.Done()
+		}()
+		subWait1.Wait()
+	}
+	mainWait1.Wait()
+	fmt.Println("end")
 }
 
 func do() {
@@ -619,7 +671,7 @@ func ReadFile(file *os.File) ([]byte, error) {
 			buffer = append(buffer, 0)[:len(buffer)]
 		}
 		offset, err := file.Read(buffer[len(buffer):cap(buffer)])
-		buffer = buffer[:len(buffer) + offset]
+		buffer = buffer[:len(buffer)+offset]
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				err = nil
@@ -670,14 +722,14 @@ func dangerOp() {
 	defer fmt.Println("1")
 	defer fmt.Println("2")
 	panic("dangerOp panic")
-	defer fmt.Println("3")
+	// defer fmt.Println("3")
 }
 
 type MyInterface interface {
 	My() string
 }
 
-type MyStruct struct{
+type MyStruct struct {
 }
 
 func (m MyStruct) My() string {
