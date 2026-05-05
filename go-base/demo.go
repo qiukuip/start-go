@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 	"unsafe"
-	"github.com/qiukuip/hello"
 )
 
 type Person struct {
@@ -443,6 +442,63 @@ func main() {
 	}
 	time.Sleep(time.Millisecond)
 	fmt.Println("end")
+
+	fmt.Println("=====")
+
+	intCh := make(chan int)
+	defer close(intCh)
+	go func() {
+		intCh <- 12345
+	}()
+	n1 := <-intCh
+
+	fmt.Println(n1)
+
+	fmt.Println("=====")
+
+	ch := make(chan int, 5)
+	chW := make(chan struct{})
+	chR := make(chan struct{})
+	
+	defer func() {
+		close(ch)
+		close(chW)
+		close(chR)
+	}()
+
+	// 往管道中写入数据
+	go func() {
+		for i := range 10 {
+			ch <- i
+			fmt.Println("write to ch <- ", i)
+			fmt.Println("len ch: ", len(ch), ", cap ch: ", cap(ch))
+		}
+		chW <- struct{}{}
+	}()
+
+	// 从管道中读取数据
+	go func() {
+		for range 10 {
+			time.Sleep(time.Millisecond)
+			fmt.Println("read ", <-ch)
+		}
+		chR <- struct{}{}
+	}()
+
+	fmt.Println("write finished", <-chW)
+	fmt.Println("read finished", <-chR)
+
+	fmt.Println("=====")
+
+	ch1 := make(chan struct{})
+	defer close(ch1)
+	go func() {
+		fmt.Println(2)
+		ch1 <- struct{}{}
+		fmt.Println("write finished")
+	}()
+	<-ch1
+	fmt.Println("read finished")
 }
 
 func do() {
