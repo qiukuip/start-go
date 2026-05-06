@@ -2,6 +2,7 @@ package main
 
 import (
 	// "bufio"
+	// "bytes"
 	"cmp"
 	"encoding/json"
 	"encoding/xml"
@@ -9,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"math/rand"
 	"net/http"
@@ -314,22 +316,22 @@ func main() {
 		fmt.Println("访问文件异常")
 	} else {
 		fmt.Println("打开文件成功", file1.Name())
-		bytes, err := ReadFile(file)
+		bytes1, err := ReadFile(file)
 		if err != nil {
 			fmt.Println("文件读取异常")
 		} else {
-			fmt.Println(string(bytes))
+			fmt.Println(string(bytes1))
 		}
 		file1.Close()
 	}
 
 	fmt.Println("=====")
 
-	bytes, err := os.ReadFile("../files/test.txt")
+	bytes2, err := os.ReadFile("../files/test.txt")
 	if err != nil {
 		fmt.Println("打开文件失败")
 	} else {
-		fmt.Println(string(bytes))
+		fmt.Println(string(bytes2))
 	}
 
 	fmt.Println("=====")
@@ -338,11 +340,11 @@ func main() {
 	if err != nil {
 		fmt.Println("打开文件出错")
 	}
-	bytes2, err := io.ReadAll(file2)
+	bytes3, err := io.ReadAll(file2)
 	if err != nil {
 		fmt.Println("打开文件出错")
 	} else {
-		fmt.Println(string(bytes2))
+		fmt.Println(string(bytes3))
 	}
 	file2.Close()
 
@@ -361,11 +363,11 @@ func main() {
 		file3.Close()
 	}
 
-	bytes3, err := os.ReadFile("../files/test.txt")
+	bytes4, err := os.ReadFile("../files/test.txt")
 	if err != nil {
 		fmt.Println("打开文件出错")
 	} else {
-		fmt.Println(string(bytes3))
+		fmt.Println(string(bytes4))
 	}
 
 	fmt.Println("=====")
@@ -577,12 +579,12 @@ func main() {
 		Age:    29,
 		Salary: 280,
 	}
-	bytes4, err := xml.MarshalIndent(person4, "", "\t")
+	bytes5, err := xml.MarshalIndent(person4, "", "\t")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(string(bytes4))
+	fmt.Println(string(bytes5))
 
 	var person5 = Person{
 		Name:   "",
@@ -614,8 +616,8 @@ func main() {
 	fmt.Println("=====")
 
 	var person7 = Person{
-		Name: "",
-		Age: 0,
+		Name:   "",
+		Age:    0,
 		Salary: 0,
 	}
 	jsonStr := "{\"name\": \"张三\", \"age\": 25, \"salary\": 120 }"
@@ -634,21 +636,63 @@ func main() {
 	fmt.Println(fName, fAge, fSex)
 
 	fmt.Println("====")
-	
+
 	// http
-	resp, err := http.Get("https://baidu.com")	
+	resp1, err := http.Get("https://baidu.com")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	defer resp.Body.Close()
-	content, err := io.ReadAll(resp.Body)
+	defer resp1.Body.Close()
+	content, err := io.ReadAll(resp1.Body)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println(string(content))
+
+	fmt.Println("=====")
+
+	// json1, _ := json.Marshal(person6)
+	// reader := bytes.NewReader(json1)
+	// resp2, err := http.Post("https://go.dev", "application/json;charset=utf-8", reader)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// defer resp2.Body.Close()
+	// bodyBytes, err := io.ReadAll(resp2.Body)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// fmt.Println("resp2: ", string(bodyBytes))
+
+	client := &http.Client{}
+	request, _ := http.NewRequest("GET", "https://baidu.com", nil)
+	request.Header.Add("Authorization", "123456")
+	resp3, _ := client.Do(request)
+	bodyBytes3, err := io.ReadAll(resp3.Body)
+	defer resp3.Body.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("resp3: ", string(bodyBytes3))
+
+	log.SetFlags(log.Lshortfile | log.Lmsgprefix | log.Ldate | log.Ltime) 
+	log.Println("日志测试")
+	log.Panicln("panic日志")
+	fmt.Println(log.Prefix())
 }
+
+const (
+	Ldate = 1 << iota
+	Ltime
+	Lmicroseconds
+	Llongfile
+	Lshortfile
+	LUTC
+	Lmsgprefix
+	LstdFlags = Ldate | Ltime
+)
 
 func Sum[N int | int64 | float64](a, b N) N {
 	return a + b
