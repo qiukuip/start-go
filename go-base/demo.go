@@ -3,11 +3,15 @@ package main
 import (
 	// "bufio"
 	"cmp"
+	"encoding/json"
+	"encoding/xml"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"math"
 	"math/rand"
+	"net/http"
 	"os"
 	"reflect"
 	"slices"
@@ -18,9 +22,9 @@ import (
 )
 
 type Person struct {
-	Name   string
-	Age    int
-	Salary float64
+	Name   string  `json:"name"`
+	Age    int     `json:"age"`
+	Salary float64 `json:"salary"`
 }
 
 func main() {
@@ -551,6 +555,103 @@ func main() {
 	}
 	mainWait1.Wait()
 	fmt.Println("end")
+
+	fmt.Println("=====")
+
+	fmt.Println("start")
+	var mainWait2 sync.WaitGroup
+	mainWait2.Add(10)
+	go func() {
+		for i := range 10 {
+			fmt.Println(i)
+			mainWait2.Done()
+		}
+	}()
+	mainWait2.Wait()
+	fmt.Println("end")
+
+	fmt.Println("=====")
+
+	person4 := Person{
+		Name:   "张三",
+		Age:    29,
+		Salary: 280,
+	}
+	bytes4, err := xml.MarshalIndent(person4, "", "\t")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(bytes4))
+
+	var person5 = Person{
+		Name:   "",
+		Age:    0,
+		Salary: 0,
+	}
+	xmlStr := "<Person>\t<Name>张三</Name>\t<Age>29</Age>\t<Salary>280</Salary></Person>"
+	err = xml.Unmarshal([]byte(xmlStr), &person5)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(person5)
+
+	fmt.Println("=====")
+
+	var person6 = Person{
+		Name:   "张三",
+		Age:    25,
+		Salary: 120,
+	}
+
+	bytes6, err := json.MarshalIndent(&person6, "", "\t")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(bytes6))
+
+	fmt.Println("=====")
+
+	var person7 = Person{
+		Name: "",
+		Age: 0,
+		Salary: 0,
+	}
+	jsonStr := "{\"name\": \"张三\", \"age\": 25, \"salary\": 120 }"
+	err = json.Unmarshal([]byte(jsonStr), &person7)
+	fmt.Println(person7)
+
+	fmt.Println("=====")
+
+	var fName string
+	var fAge int
+	var fSex bool
+	flag.StringVar(&fName, "name", "张三", "姓名")
+	flag.IntVar(&fAge, "age", 12, "年龄")
+	flag.BoolVar(&fSex, "sex", true, "性别")
+	flag.Parse()
+	fmt.Println(fName, fAge, fSex)
+
+	fmt.Println("====")
+	
+	// http
+	resp, err := http.Get("https://baidu.com")	
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(content))
+}
+
+func Sum[N int | int64 | float64](a, b N) N {
+	return a + b
 }
 
 func do() {
